@@ -1,0 +1,26 @@
+import numpy as np
+from sklearn.model_selection import train_test_split
+from google.colab import drive
+
+drive.mount('/content/gdrive')
+DATA_PATH = '/content/gdrive/My Drive/Summer Research/dataset2'
+CLASS_LABELS_S = ("S0", "S1", "S2", "S3","S4")
+CLASS_LABELS_NP = ("NP0", "NP1", "NP2", "NP3","NP4")
+
+def extract_data(strength):
+    if strength:
+      Class_Labels =  CLASS_LABELS_S
+    else:
+      Class_Labels =  CLASS_LABELS_NP
+    data, labels = get_data(DATA_PATH, class_labels=Class_Labels)
+    x_train, x_test, y_train, y_test = train_test_split(
+        data,
+        labels,
+        test_size=0.2,
+        random_state=42)
+    return np.array(x_train), np.array(x_test), np.array(y_train), np.array(
+        y_test), len(Class_Labels)
+
+
+def get_feature_vector(file_path):
+    return get_feature_vector_from_mfcc(file_path, mfcc_len=39)
