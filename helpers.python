@@ -1,0 +1,22 @@
+def str_eng(num):
+  if num == 4:
+    return 'Very Active'
+  elif num == 3:
+    return 'Active'
+  elif num == 2:
+    return 'Neutral'
+  elif num == 1:
+    return 'Passive'
+  elif num == 0:
+    return 'Very Passive'
+def np_eng(num):
+  if num == 4:
+    return 'Very Positive'
+  elif num == 3:
+    return 'Positive'
+  elif num == 2:
+    return 'Neutral'
+  elif num == 1:
+    return 'Negative'
+  elif num == 0:
+    return 'Very Negative'
