@@ -1,0 +1,21 @@
+import numpy as np
+from IPython.display import Audio
+from scipy.io import wavfile
+from IPython.display import HTML
+
+
+#Audio(filename1)
+#Audio(filename2)
+#signal = np.ravel(signal)
+filename4 = '/content/gdrive/My Drive/Summer Research/dataset2/rec3.wav'
+sample4 = get_feature_vector_from_mfcc(filename4, flatten=True, display_wave = True)
+print('prediction on rc')
+print(str_eng(strength_nn.evaluate_one(sample4, pt = True)))
+print(np_eng(np_nn.evaluate_one(sample4, pt = True)))
+Audio(filename4)
+
+#Audio(filename3)
+#Audio(filename4)
+#Audio(filename5)
+
+#HTML('<iframe width="640" height="360" src="https://www.youtube.com/embed/HkAK9QRe4ds" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>')
