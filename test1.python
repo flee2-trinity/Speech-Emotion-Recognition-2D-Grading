@@ -1,0 +1,35 @@
+drive.mount('/content/gdrive')
+
+
+filename0 = '/content/gdrive/My Drive/Summer Research/dataset2/t2.wav'
+sample0 = get_feature_vector_from_mfcc(filename0, display_wave = True)
+print('prediction on t2')
+print(strength_nn.evaluate_one(sample0))
+print(np_nn.evaluate_one(sample0))
+
+filename1 = '/content/gdrive/My Drive/Summer Research/dataset2/t1.wav'
+sample1 = get_feature_vector_from_mfcc(filename1, display_wave = True)
+print('prediction on t1')
+print(strength_nn.evaluate_one(sample1))
+print(np_nn.evaluate_one(sample1))
+
+filename2 = '/content/gdrive/My Drive/Summer Research/dataset2/clip1_2.wav'
+sample2 = get_feature_vector_from_mfcc(filename2, flatten=True, display_wave = True)
+print('prediction on clip1_2')
+print(strength_nn.evaluate_one(sample2))
+print(np_nn.evaluate_one(sample2))
+filename3 = '/content/gdrive/My Drive/Summer Research/dataset2/clip1_1.wav'
+sample3 = get_feature_vector_from_mfcc(filename3, flatten=True, display_wave = True)
+print('prediction on clip1_1')
+print(strength_nn.evaluate_one(sample3))
+print(np_nn.evaluate_one(sample3))
+
+filename4 = '/content/gdrive/My Drive/Summer Research/dataset2/rec3.wav'
+sample4 = get_feature_vector_from_mfcc(filename4, flatten=True, display_wave = True)
+print('prediction on rc')
+print(strength_nn.evaluate_one(sample4))
+print(np_nn.evaluate_one(sample4))
+
+filename5 = '/content/gdrive/My Drive/Summer Research/dataset2/clip1.wav'
+print(strength_nn.cookie_cutter_evaluate(filename5, flatten=True, display_wave = True))
+print(np_nn.cookie_cutter_evaluate(filename5,  flatten=True, display_wave = True))
