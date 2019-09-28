@@ -1,0 +1,67 @@
+import os
+import sys
+from typing import Tuple
+import numpy as np
+import scipy.io.wavfile as wav
+import wave
+!pip install speechpy
+from speechpy.feature import mfcc
+import contextlib
+import matplotlib.pyplot as plt
+import librosa
+import librosa.display
+!pip install pydub
+from pydub import AudioSegment
+def get_data(data_path: str, mfcc_len: int = 39, class_labels: Tuple = ()) -> \
+        Tuple[np.ndarray, np.ndarray]:
+    data = []
+    labels = []
+    names = []
+    cur_dir = os.getcwd()
+    sys.stderr.write('curdir: %s\n' % cur_dir)
+    os.chdir(data_path)
+    for i, directory in enumerate(class_labels):
+        sys.stderr.write("started reading folder %s\n" % directory)
+        os.chdir(directory)
+        for filename in os.listdir('.'):
+            filepath = os.getcwd() + '/' + filename
+            feature_vector = get_feature_vector_from_mfcc(file_path=filepath,
+                                                          mfcc_len=mfcc_len)
+            data.append(feature_vector)
+            labels.append(i)
+            names.append(filename)
+        sys.stderr.write("ended reading folder %s\n" % directory)
+        os.chdir('..')
+    os.chdir(cur_dir)
+    return np.array(data), np.array(labels)
+  
+def get_feature_vector_from_mfcc(file_path: str, mfcc_len: int = 39, flatten: bool = False, display_wave: bool = False) -> np.ndarray:
+    fs, signal = wav.read(file_path)
+
+    if flatten:
+      signal = signal.flatten()
+      fs *= 2
+    signal = signal*(30000/signal.max())
+    if display_wave:
+      plt.figure(figsize=(12, 4))
+      librosa.display.waveplot(signal.astype('float'), sr=fs)
+      plt.show()
+    sig_mfcc = mfcc(signal, fs, num_cepstral=mfcc_len)
+    sig_len = sig_mfcc.shape[0]
+
+    mean_len = 250
+    if sig_len > mean_len:
+      pad_len = sig_len - mean_len
+      pad_len //= 2
+      sig_mfcc = sig_mfcc[pad_len:pad_len + mean_len]
+    if sig_len < mean_len:
+      pad_len = mean_len - sig_len
+      sig_mfcc = np.concatenate((sig_mfcc, sig_mfcc[0:pad_len]), axis=0)
+    return sig_mfcc
+def enlarge_volume(signal):
+  sig = []
+  for s in signal:
+    if s != 0:
+      s += int(s/5)
+      sig.append(s)
+  return np.ndarray(sig)
