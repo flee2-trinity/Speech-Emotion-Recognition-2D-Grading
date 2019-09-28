@@ -1,0 +1,76 @@
+from keras.utils import np_utils
+import os
+import sys
+from typing import Tuple
+import numpy as np
+import scipy.io.wavfile as wav
+!pip install speechpy
+from speechpy.feature import mfcc
+import matplotlib.pyplot as plt
+class nn():
+  def __init__(self, strength:bool):
+    if strength:
+      print('----------------------------S-------------------------------------')
+      x_train, x_test, y_train, y_test, num_labels = extract_data(True)
+    else:
+      print('----------------------------NP-------------------------------------')
+      x_train, x_test, y_train, y_test, num_labels = extract_data(False)
+    y_train = np_utils.to_categorical(y_train)
+    y_test_train = np_utils.to_categorical(y_test)
+    print('Starting LSTM')
+    #print(x_train.shape)
+    in_shape = x_train[0].shape
+    #print(in_shape[0], in_shape[1])
+    x_train = x_train.reshape(x_train.shape[0], in_shape[0], in_shape[1], 1)
+    x_test = x_test.reshape(x_test.shape[0], in_shape[0], in_shape[1], 1)
+    self.model = LSTM(input_shape=x_train[0].shape, num_classes=num_labels)
+    self.model.train(x_train, y_train, x_test, y_test_train, n_epochs = 8)
+    self.model.evaluate(x_test, y_test)
+
+    self.name = 'Strength: '
+    if not strength:
+      self.name = 'Negative - Positive: '
+  def evaluate_one(self, sample, pt: bool = False):
+    if pt:
+      print(self.name)
+    #test_re = test.reshape(test.shape[0], test.shape[0], test.shape[1], 1)
+    sp = np.array([sample])
+    #print('in eva one', sp.shape)
+    sp = sp.reshape(sp.shape[1], sp.shape[2],  1)
+    #print('after', sp.shape)
+    return self.model.predict_one(sp)
+
+  def cookie_cutter_evaluate(self, file_path: str, mfcc_len: int = 39, flatten: bool = False, display_wave: bool = False):
+    fs, signal = wav.read(file_path)
+    if flatten:
+      signal = signal.flatten()
+      fs *= 2
+    if display_wave:
+      plt.figure(figsize=(50, 4))
+      librosa.display.waveplot(signal.astype('float'), sr = fs)
+      plt.show()
+    sig_mfcc = mfcc(signal, fs, num_cepstral = mfcc_len)
+    sig_len = sig_mfcc.shape[0]
+    mean_len = 250
+    sig_num = int(sig_len / mean_len)
+    #print('siganl length ', signal.shape[0])
+    #print('num ', sig_num)
+    signal_average_len = int(signal.shape[0] / sig_num)
+    #print('signal_average_len ', signal_average_len)
+    predict_all = []
+    for s_num in range(0, sig_num):
+      s_segment = signal[s_num * signal_average_len : s_num * signal_average_len + signal_average_len]
+      s_segment = s_segment*(30000/s_segment.max())
+      s_mfcc = mfcc(s_segment, fs, num_cepstral=mfcc_len)
+      s_len = s_mfcc.shape[0]
+      if s_len > mean_len:
+        pad_len = s_len - mean_len
+        pad_len //= 2
+        s_mfcc = s_mfcc[pad_len:pad_len + mean_len]
+      if s_len < mean_len:
+        pad_len = mean_len - s_len
+        s_mfcc = np.concatenate((s_mfcc, s_mfcc[0:pad_len]), axis=0) 
+      predict_all.append(self.evaluate_one(s_mfcc))
+    return predict_all
+strength_nn = nn(True)
+np_nn = nn(False)
