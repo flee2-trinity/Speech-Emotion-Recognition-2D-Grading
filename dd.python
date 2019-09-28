@@ -1,0 +1,133 @@
+import sys
+import numpy as np
+from typing import Tuple
+from keras import Sequential
+from sklearn.metrics import accuracy_score, confusion_matrix, zero_one_loss
+from keras.layers import LSTM as KERAS_LSTM, Dense, Dropout, Conv2D, Flatten, \
+    BatchNormalization, Activation, MaxPooling2D, Conv1D, Reshape
+from keras.models import Sequential
+class Model(object):
+
+    def __init__(self, save_path: str = '', name: str = 'Not Specified'):
+        self.model = None
+        self.save_path = save_path
+        self.name = name
+        self.trained = False
+
+
+    def predict(self, samples: np.ndarray):
+        results = []
+        for _, sample in enumerate(samples):
+            #print(sample.shape)
+            results.append(self.predict_one(sample))
+        return results
+
+    def evaluate(self, x_test: np.ndarray, y_test: np.ndarray):
+        predictions = self.predict(x_test)
+        print('Evaluating....')
+        print(list(y_test))
+        print(predictions)
+        print('Accuracy:%.3f' % accuracy_score(y_pred=tuple(predictions), y_true=y_test))
+        print('Average Distance Away:%.3f\n' % self.average_dist(predictions, list(y_test)))
+        print('Confusion matrix:\n', confusion_matrix(y_pred=predictions, y_true=y_test))
+    def average_dist(self, x_test, y_test):
+        total_loss = 0
+        total_num = 0
+        for x_one, y_one in zip(x_test, y_test):
+          total_num +=1
+          if x_one != y_one:
+            total_loss += abs(x_one-y_one)
+        return total_loss/total_num
+         
+
+class DNN(Model):
+
+    def __init__(self, input_shape, num_classes, **params):
+        super(DNN, self).__init__(**params)
+        self.input_shape = input_shape
+        self.model = Sequential()
+        self.make_default_model()
+        self.model.add(Dense(num_classes, activation='softmax'))
+        self.model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        print(self.model.summary(), file=sys.stderr)
+        self.save_path = self.save_path or self.name + '_best_model.h5'
+
+
+    def train(self, x_train, y_train, x_val=None, y_val=None, n_epochs=50):
+        best_acc = 0
+        if x_val is None or y_val is None:
+            x_val, y_val = x_train, y_train
+        for i in range(n_epochs):
+            p = np.random.permutation(len(x_train))
+            x_train = x_train[p]
+            y_train = y_train[p]
+            self.model.fit(x_train, y_train, batch_size=32, epochs=1)
+            loss, acc = self.model.evaluate(x_val, y_val)
+            if acc > best_acc:
+                best_acc = acc
+        self.trained = True
+
+    def predict_one(self, sample):
+        if not self.trained:
+            sys.stderr.write(
+                "Model should be trained or loaded before doing predict\n")
+            sys.exit(-1)
+        sp = np.array([sample])
+        return np.argmax(self.model.predict(sp))
+
+class CNN(DNN):
+
+    def __init__(self, **params):
+        params['name'] = 'CNN'
+        super(CNN, self).__init__(**params)
+
+    def make_default_model(self):
+        self.model.add(Conv2D(8, (13,13),input_shape=(self.input_shape[0], self.input_shape[1], 1)))
+        self.model.add(BatchNormalization(axis=-1))
+        self.model.add(Activation('relu'))
+        self.model.add(Conv2D(8, (13, 13)))
+        self.model.add(BatchNormalization(axis=-1))
+        self.model.add(Activation('relu'))
+        self.model.add(MaxPooling2D(pool_size=(2, 1)))
+        self.model.add(Conv2D(8, (13, 13)))
+        self.model.add(BatchNormalization(axis=-1))
+        self.model.add(Activation('relu'))
+        self.model.add(Conv2D(8, (2, 2)))
+        self.model.add(BatchNormalization(axis=-1))
+        self.model.add(Activation('relu'))
+        self.model.add(MaxPooling2D(pool_size=(2, 1)))
+        self.model.add(Flatten())
+        self.model.add(Dense(64))
+        self.model.add(BatchNormalization())
+        self.model.add(Activation('relu'))
+        self.model.add(Dropout(0.2))
+
+
+class LSTM(DNN):
+    def __init__(self, **params):
+        params['name'] = 'LSTM'
+        super(LSTM, self).__init__(**params)
+
+    def make_default_model(self):
+ #       self.model.add(Conv2D(8, (13,13),input_shape=(self.input_shape[0], self.input_shape[1], 1)))
+#        self.model.add(BatchNormalization(axis=-1))
+#        self.model.add(Activation('relu'))
+#        self.model.add(Conv2D(8, (13, 13)))
+#        self.model.add(BatchNormalization(axis=-1))
+#        self.model.add(Activation('relu'))
+ #       self.model.add(MaxPooling2D(pool_size=(2, 1)))
+#        print(self.input_shape[0],' ', self.input_shape[1])
+        self.model.add(Conv2D(8, (13,13),input_shape=(self.input_shape[0], self.input_shape[1], 1)))
+        self.model.add(BatchNormalization(axis=-1))
+        self.model.add(Activation('relu'))
+        self.model.add(Conv2D(8, (13, 13)))
+        self.model.add(BatchNormalization(axis=-1))
+        self.model.add(Activation('relu'))
+        #self.model.add(MaxPooling2D(pool_size=(2, 1)))
+        self.model.add(Reshape(target_shape=((self.model.output_shape[1], self.model.output_shape[2] * self.model.output_shape[3]))))
+        self.model.add(KERAS_LSTM(128))
+        self.model.add(Dropout(0.5))
+        self.model.add(Dense(32, activation='relu'))
+        self.model.add(Dense(16, activation='tanh'))
+#        self.model.summary()
+
